@@ -41,7 +41,7 @@ jobs:
         run: |
           set -uo pipefail
           echo '### Live analytics tracker coverage' >> "$GITHUB_STEP_SUMMARY"
-          for repo in FaithHub breach-command StarHaven Marsh Wild2 Echo ElodinDeepLore elodin-deep-lore; do
+          for repo in FaithHub breach-command StarHaven Marsh Wild2 Echo ElodinDeepLore elodin-deep-lore delve kkc-adventure NebulaDice-Browser random-play Repository-town; do
             URL="https://parris-tech-services.github.io/$repo/"
             if curl -fLsS --max-time 20 --retry 2 "$URL" -o /tmp/tracked.html && grep -Fq 'parris-analytics.parris-neathaustralia.workers.dev/tracker.js' /tmp/tracked.html; then
               echo "$repo : PUBLISHED" | tee -a "$GITHUB_STEP_SUMMARY"
