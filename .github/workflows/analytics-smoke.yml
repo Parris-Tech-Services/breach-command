@@ -20,7 +20,10 @@ jobs:
           URL="https://parris-analytics.parris-neathaustralia.workers.dev"
           curl --fail --show-error --silent --retry 3 --retry-delay 5 "$URL/health" | tee health.json
           grep -q '"ok":true' health.json
-          curl --fail --show-error --silent --retry 3 --retry-delay 5 "$URL/tracker.js" | grep -q 'parris-analytics-consent-v1'
+          curl --fail --show-error --silent --retry 3 --retry-delay 5 "$URL/tracker.js?v=2" -o /tmp/analytics-tracker.js
+          grep -q 'parris-analytics-consent-v1' /tmp/analytics-tracker.js
+          grep -q 'pointer-events:none' /tmp/analytics-tracker.js
+          grep -q 'pointer-events:auto' /tmp/analytics-tracker.js
       - name: Verify end-to-end D1 write using diagnostic-only event
         shell: bash
         run: |
