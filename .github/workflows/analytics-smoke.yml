@@ -49,3 +49,17 @@ jobs:
               echo "$repo : NOT CONFIRMED" | tee -a "$GITHUB_STEP_SUMMARY"
             fi
           done
+
+      - name: Discover other live public game sites
+        shell: bash
+        run: |
+          set -uo pipefail
+          echo '### Additional game deployment discovery (not yet instrumented)' >> "$GITHUB_STEP_SUMMARY"
+          for repo in Arena ashfaller bramblewick CanonRPG drifter lantern-road lore NeathBound schism TextGame wastes-courier-roguelike WhirringWilderness JoshChess RothfussMaps SwordCoast; do
+            URL="https://parris-tech-services.github.io/$repo/index.html?parris_probe=20261031"
+            if curl -fLsS --max-time 15 --retry 1 "$URL" -o /tmp/discovery.html && grep -Eiq '<html|<!doctype' /tmp/discovery.html; then
+              echo "$repo : LIVE" | tee -a "$GITHUB_STEP_SUMMARY"
+            else
+              echo "$repo : NOT CONFIRMED" | tee -a "$GITHUB_STEP_SUMMARY"
+            fi
+          done
