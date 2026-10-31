@@ -35,3 +35,17 @@ jobs:
           CODE=$(curl --show-error --silent -o /tmp/deny -w '%{http_code}' -X POST "$URL/event" -H 'Origin: https://unapproved.example' -H 'Content-Type: application/json' --data '{"site":"breach-command","path":"/breach-command/","event":"test"}')
           cat /tmp/deny
           test "$CODE" = "403"
+
+      - name: Audit live GitHub Pages tracker publication (non-blocking)
+        shell: bash
+        run: |
+          set -uo pipefail
+          echo '### Live analytics tracker coverage' >> "$GITHUB_STEP_SUMMARY"
+          for repo in FaithHub breach-command StarHaven Marsh Wild2 Echo ElodinDeepLore elodin-deep-lore; do
+            URL="https://parris-tech-services.github.io/$repo/"
+            if curl -fLsS --max-time 20 --retry 2 "$URL" -o /tmp/tracked.html && grep -Fq 'parris-analytics.parris-neathaustralia.workers.dev/tracker.js' /tmp/tracked.html; then
+              echo "$repo : PUBLISHED" | tee -a "$GITHUB_STEP_SUMMARY"
+            else
+              echo "$repo : NOT CONFIRMED" | tee -a "$GITHUB_STEP_SUMMARY"
+            fi
+          done
