@@ -157,3 +157,19 @@ jobs:
               echo "$page : NOT CONFIRMED" | tee -a "$GITHUB_STEP_SUMMARY"
             fi
           done
+
+      - name: Probe Vercel public production sites
+        shell: bash
+        run: |
+          set -uo pipefail
+          echo '### Vercel public analytics coverage' >> "$GITHUB_STEP_SUMMARY"
+          for entry in parrispiano.vercel.app:parris-piano sword-coast.vercel.app:sword-coast joshrs.vercel.app:joshrs; do
+            HOST="${entry%%:*}"
+            SITE="${entry#*:}"
+            URL="https://$HOST/?parris_probe=20261031"
+            if curl -fLsS --retry 2 --max-time 20 "$URL" -o /tmp/vercel.html && grep -Fq "data-site=\"$SITE\"" /tmp/vercel.html; then
+              echo "$HOST : PUBLISHED" | tee -a "$GITHUB_STEP_SUMMARY"
+            else
+              echo "$HOST : NOT CONFIRMED" | tee -a "$GITHUB_STEP_SUMMARY"
+            fi
+          done
