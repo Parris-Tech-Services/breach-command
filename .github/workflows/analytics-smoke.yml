@@ -173,3 +173,28 @@ jobs:
               echo "$HOST : NOT CONFIRMED" | tee -a "$GITHUB_STEP_SUMMARY"
             fi
           done
+
+      - name: New cross-repo analytics production deployment audit
+        shell: bash
+        run: |
+          set -uo pipefail
+          echo '### New production rollouts' >> "$GITHUB_STEP_SUMMARY"
+          for entry in 'astra-dnd|astra-dnd-game.vercel.app' 'appfactory|app-factory-gamma.vercel.app' 'eleven-realms|realms-bay.vercel.app' 'ashfallen|ashfallen.vercel.app' 'parris-tech-services|parris-tech-services-app.vercel.app' 'aetheria|skill-deploy-fs1ircxjkn.vercel.app' 'chess|chess-kappa-five.vercel.app' 'josh-cards|josh-cards-gamma.vercel.app' 'waypoint|waypoint-azure.vercel.app'; do
+            IFS='|' read -r site host <<< "$entry"
+            if curl -fLsS --retry 1 --max-time 15 "https://$host/?analytics_probe=20261031" -o /tmp/site.html && grep -Fq 'parris-analytics.parris-neathaustralia.workers.dev' /tmp/site.html; then
+              echo "$site @ $host : PUBLISHED" | tee -a "$GITHUB_STEP_SUMMARY"
+            else
+              echo "$site @ $host : NOT VERIFIED" | tee -a "$GITHUB_STEP_SUMMARY"
+            fi
+          done
+          echo '### JoshHub per-game published tracker checks' >> "$GITHUB_STEP_SUMMARY"
+          for game in buckland-blocks forbidden-quests mysterious-depths neverwinter-tales starhaven; do
+            for host in josh-hub-two.vercel.app josh-hub-96no.vercel.app; do
+              url="https://$host/games/$game/index.html?analytics_probe=20261031"
+              if curl -fLsS --retry 1 --max-time 12 "$url" -o /tmp/game.html && grep -Fq "data-site=\"joshhub-$game\"" /tmp/game.html; then
+                echo "$host/$game : PUBLISHED" | tee -a "$GITHUB_STEP_SUMMARY"
+              else
+                echo "$host/$game : NOT VERIFIED" | tee -a "$GITHUB_STEP_SUMMARY"
+              fi
+            done
+          done
