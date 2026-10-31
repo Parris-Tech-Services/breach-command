@@ -179,7 +179,7 @@ jobs:
         run: |
           set -uo pipefail
           echo '### New production rollouts' >> "$GITHUB_STEP_SUMMARY"
-          for entry in 'astra-dnd|astra-dnd-game.vercel.app' 'appfactory|app-factory-gamma.vercel.app' 'eleven-realms|realms-bay.vercel.app' 'ashfallen|ashfallen.vercel.app' 'parris-tech-services|parris-tech-services-app.vercel.app' 'aetheria|skill-deploy-fs1ircxjkn.vercel.app' 'chess|chess-kappa-five.vercel.app' 'josh-cards|josh-cards-gamma.vercel.app' 'waypoint|waypoint-azure.vercel.app'; do
+          for entry in 'astra-dnd|astra-dnd-game.vercel.app' 'appfactory|app-factory-gamma.vercel.app' 'eleven-realms|realms-bay.vercel.app' 'ashfallen|ashfallen.vercel.app' 'parris-tech-services|parris-tech-services-app.vercel.app' 'aetheria|skill-deploy-fs1ircxjkn.vercel.app' 'chess|chess-kappa-five.vercel.app' 'josh-cards|josh-cards-gamma.vercel.app' 'waypoint|waypoint-azure.vercel.app' 'chess|chess-rho-gilt.vercel.app' 'eleven-realms|eleven-realms.vercel.app' 'arena|llm-gladiator-arena.vercel.app' 'drifter|drifter-sigma.vercel.app' 'lore|lore-beryl.vercel.app'; do
             IFS='|' read -r site host <<< "$entry"
             if curl -fLsS --retry 1 --max-time 15 "https://$host/?analytics_probe=20261031" -o /tmp/site.html && grep -Fq 'parris-analytics.parris-neathaustralia.workers.dev' /tmp/site.html; then
               echo "$site @ $host : PUBLISHED" | tee -a "$GITHUB_STEP_SUMMARY"
