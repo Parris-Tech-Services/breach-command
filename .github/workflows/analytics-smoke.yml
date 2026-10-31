@@ -6,6 +6,8 @@ on:
       - '.github/workflows/analytics-smoke.yml'
       - 'index.html'
   workflow_dispatch:
+  schedule:
+    - cron: '21 6 * * *'
 jobs:
   smoke:
     runs-on: ubuntu-latest
@@ -50,7 +52,7 @@ jobs:
         run: |
           set -uo pipefail
           echo '### Live analytics tracker coverage' >> "$GITHUB_STEP_SUMMARY"
-          for repo in FaithHub breach-command StarHaven Marsh Wild2 Echo ElodinDeepLore elodin-deep-lore delve kkc-adventure NebulaDice-Browser random-play Repository-town Arena ashfaller drifter lantern-road lore NeathBound schism TextGame wastes-courier-roguelike WhirringWilderness exitbackup ParrisPiano; do
+          for repo in FaithHub breach-command StarHaven Marsh Wild2 Echo ElodinDeepLore elodin-deep-lore delve kkc-adventure NebulaDice-Browser random-play Repository-town Arena ashfaller drifter lantern-road lore NeathBound schism TextGame wastes-courier-roguelike WhirringWilderness exitbackup JoshOS-Stage0 JoshRS ParrisPiano SwordCoast; do
             URL="https://parris-tech-services.github.io/$repo/index.html?parris_probe=20261031"
             if curl -fLsS --max-time 20 --retry 2 "$URL" -o /tmp/tracked.html && grep -Fq 'parris-analytics.parris-neathaustralia.workers.dev/tracker.js' /tmp/tracked.html; then
               echo "$repo : PUBLISHED" | tee -a "$GITHUB_STEP_SUMMARY"
@@ -82,3 +84,37 @@ jobs:
           else
             echo "JoshOS-Stage0 shell : NOT CONFIRMED" | tee -a "$GITHUB_STEP_SUMMARY"
           fi
+
+      - name: Diagnostic-only write checks for every registered site
+        shell: bash
+        run: |
+          set -euo pipefail
+          API="https://parris-analytics.parris-neathaustralia.workers.dev/event"
+          ORIGIN="https://parris-tech-services.github.io"
+          sites=(
+            'arena|/Arena/' 'ashfaller|/ashfaller/' 'breach-command|/breach-command/'
+            'delve|/delve/' 'drifter|/drifter/' 'echo|/Echo/'
+            'elodin-deep-lore|/elodin-deep-lore/' 'elodin-lore|/ElodinDeepLore/'
+            'faithhub|/FaithHub/' 'hitchhiker-rpg|/exitbackup/'
+            'joshos-shell|/JoshOS-Stage0/' 'joshrs|/JoshRS/'
+            'kkc-adventure|/kkc-adventure/' 'lantern-road|/lantern-road/'
+            'lore|/lore/' 'marsh|/Marsh/' 'neathbound|/NeathBound/'
+            'nebula-dice|/NebulaDice-Browser/' 'parris-piano|/ParrisPiano/'
+            'random-play|/random-play/' 'repository-town|/Repository-town/'
+            'schism|/schism/' 'star-haven|/StarHaven/' 'sword-coast|/SwordCoast/'
+            'textgame|/TextGame/' 'wastes-courier|/wastes-courier-roguelike/'
+            'whirring-wilderness|/WhirringWilderness/' 'wild2|/Wild2/'
+          )
+          count=0
+          for entry in "${sites[@]}"; do
+            IFS='|' read -r site path <<< "$entry"
+            code=$(curl --silent --show-error --max-time 12 -o /tmp/diag-response -w '%{http_code}' \
+              -X POST "$API" -H "Origin: $ORIGIN" -H 'Content-Type: application/json' \
+              --data "{\"site\":\"$site\",\"path\":\"$path\",\"event\":\"test\"}")
+            if [[ "$code" != "204" ]]; then
+              echo "FAILED: $site ($code): $(cat /tmp/diag-response)"
+              exit 1
+            fi
+            count=$((count+1))
+          done
+          echo "Diagnostic-only D1 writes passed for $count registered site IDs" | tee -a "$GITHUB_STEP_SUMMARY"
