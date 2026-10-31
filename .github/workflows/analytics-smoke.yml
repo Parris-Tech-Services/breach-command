@@ -27,6 +27,15 @@ jobs:
           CODE=$(curl --show-error --silent --retry 3 --retry-delay 5 -o /tmp/result -w '%{http_code}' -X POST "$URL/event" -H 'Origin: https://parris-tech-services.github.io' -H 'Content-Type: application/json' --data '{"site":"breach-command","path":"/breach-command/","event":"test"}')
           cat /tmp/result
           test "$CODE" = "204"
+      - name: Verify browser CORS preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="https://parris-analytics.parris-neathaustralia.workers.dev/event"
+          CODE=$(curl --silent --show-error -D /tmp/cors-headers -o /tmp/cors-body -w '%{http_code}' -X OPTIONS "$URL" -H 'Origin: https://parris-tech-services.github.io' -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: content-type')
+          test "$CODE" = "204"
+          grep -iq 'access-control-allow-origin: https://parris-tech-services.github.io' /tmp/cors-headers
+          grep -iq 'access-control-allow-headers: content-type' /tmp/cors-headers
       - name: Verify invalid origin is rejected
         shell: bash
         run: |
