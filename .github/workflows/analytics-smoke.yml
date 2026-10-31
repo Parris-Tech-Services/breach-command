@@ -1,0 +1,37 @@
+name: Verify Parris Analytics public endpoint
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/analytics-smoke.yml'
+      - 'index.html'
+  workflow_dispatch:
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Verify Worker database health and browser SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="https://parris-analytics.parris-neathaustralia.workers.dev"
+          curl --fail --show-error --silent --retry 3 --retry-delay 5 "$URL/health" | tee health.json
+          grep -q '"ok":true' health.json
+          curl --fail --show-error --silent --retry 3 --retry-delay 5 "$URL/tracker.js" | grep -q 'parris-analytics-consent-v1'
+      - name: Verify end-to-end D1 write using diagnostic-only event
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="https://parris-analytics.parris-neathaustralia.workers.dev"
+          CODE=$(curl --show-error --silent --retry 3 --retry-delay 5 -o /tmp/result -w '%{http_code}' -X POST "$URL/event" -H 'Origin: https://parris-tech-services.github.io' -H 'Content-Type: application/json' --data '{"site":"breach-command","path":"/breach-command/","event":"test"}')
+          cat /tmp/result
+          test "$CODE" = "204"
+      - name: Verify invalid origin is rejected
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="https://parris-analytics.parris-neathaustralia.workers.dev"
+          CODE=$(curl --show-error --silent -o /tmp/deny -w '%{http_code}' -X POST "$URL/event" -H 'Origin: https://unapproved.example' -H 'Content-Type: application/json' --data '{"site":"breach-command","path":"/breach-command/","event":"test"}')
+          cat /tmp/deny
+          test "$CODE" = "403"
