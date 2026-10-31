@@ -121,3 +121,25 @@ jobs:
             count=$((count+1))
           done
           echo "Diagnostic-only D1 writes passed for $count registered site IDs" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify Vercel production domains and diagnostic origin rules
+        shell: bash
+        run: |
+          set -euo pipefail
+          API="https://parris-analytics.parris-neathaustralia.workers.dev/event"
+          echo '### Vercel production checks' >> "$GITHUB_STEP_SUMMARY"
+          for item in 'joshrs|joshrs.vercel.app' 'parris-piano|parrispiano.vercel.app' 'sword-coast|sword-coast.vercel.app'; do
+            IFS='|' read -r site host <<< "$item"
+            page="https://$host/index.html?parris_probe=20261031"
+            published="NOT CONFIRMED"
+            if curl --silent --show-error --fail --location --max-time 20 "$page" -o /tmp/parris-vercel.html &&
+              grep -Fq 'parris-analytics.parris-neathaustralia.workers.dev/tracker.js' /tmp/parris-vercel.html &&
+              grep -Fq "data-site=\"$site\"" /tmp/parris-vercel.html; then
+              published="PUBLISHED"
+            fi
+            code=$(curl --silent --show-error -o /tmp/parris-vercel-test -w '%{http_code}' \
+              -X POST "$API" -H "Origin: https://$host" -H 'Content-Type: application/json' \
+              --data "{\"site\":\"$site\",\"path\":\"/\",\"event\":\"test\"}")
+            echo "$site : $published ; diagnostic HTTP $code" | tee -a "$GITHUB_STEP_SUMMARY"
+            [[ "$code" == "204" ]] || exit 1
+          done
