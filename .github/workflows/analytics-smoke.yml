@@ -41,7 +41,7 @@ jobs:
         run: |
           set -uo pipefail
           echo '### Live analytics tracker coverage' >> "$GITHUB_STEP_SUMMARY"
-          for repo in FaithHub breach-command StarHaven Marsh Wild2 Echo ElodinDeepLore elodin-deep-lore delve kkc-adventure NebulaDice-Browser random-play Repository-town Arena ashfaller drifter lantern-road lore NeathBound schism TextGame wastes-courier-roguelike WhirringWilderness; do
+          for repo in FaithHub breach-command StarHaven Marsh Wild2 Echo ElodinDeepLore elodin-deep-lore delve kkc-adventure NebulaDice-Browser random-play Repository-town Arena ashfaller drifter lantern-road lore NeathBound schism TextGame wastes-courier-roguelike WhirringWilderness exitbackup ParrisPiano; do
             URL="https://parris-tech-services.github.io/$repo/index.html?parris_probe=20261031"
             if curl -fLsS --max-time 20 --retry 2 "$URL" -o /tmp/tracked.html && grep -Fq 'parris-analytics.parris-neathaustralia.workers.dev/tracker.js' /tmp/tracked.html; then
               echo "$repo : PUBLISHED" | tee -a "$GITHUB_STEP_SUMMARY"
@@ -63,3 +63,13 @@ jobs:
               echo "$repo : NOT CONFIRMED" | tee -a "$GITHUB_STEP_SUMMARY"
             fi
           done
+
+      - name: Verify published JoshOS shell tracker
+        shell: bash
+        run: |
+          URL="https://parris-tech-services.github.io/JoshOS-Stage0/shell/index.html?parris_probe=20261031"
+          if curl -fLsS --max-time 20 "$URL" -o /tmp/joshos.html && grep -Fq 'data-site="joshos-shell"' /tmp/joshos.html; then
+            echo "JoshOS-Stage0 shell : PUBLISHED" | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            echo "JoshOS-Stage0 shell : NOT CONFIRMED" | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
