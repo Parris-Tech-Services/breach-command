@@ -143,3 +143,17 @@ jobs:
             echo "$site : $published ; diagnostic HTTP $code" | tee -a "$GITHUB_STEP_SUMMARY"
             [[ "$code" == "204" ]] || exit 1
           done
+
+      - name: Verify FaithHub public reading pages
+        shell: bash
+        run: |
+          set -uo pipefail
+          echo '### FaithHub reading-page tracking' >> "$GITHUB_STEP_SUMMARY"
+          for page in index.html cornerstone-teachings.html ab401a-genesis.html daily-prayer.html podcasts.html prayer-library.html prayer-practice.html psalms.html saints-prayer.html scripture-atlas.html; do
+            URL="https://parris-tech-services.github.io/FaithHub/$page?parris_probe=20261031"
+            if curl -fLsS --retry 2 --max-time 20 "$URL" -o /tmp/faithpage.html && grep -Fq 'data-site="faithhub"' /tmp/faithpage.html; then
+              echo "$page : PUBLISHED" | tee -a "$GITHUB_STEP_SUMMARY"
+            else
+              echo "$page : NOT CONFIRMED" | tee -a "$GITHUB_STEP_SUMMARY"
+            fi
+          done
